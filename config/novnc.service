@@ -1,0 +1,16 @@
+[Unit]
+Description=noVNC WebSocket VNC Proxy
+After=network.target vncserver@[DISPLAY].service
+Requires=vncserver@[DISPLAY].service
+
+[Service]
+Type=simple
+User=[USERNAME]
+Group=[USERNAME]
+WorkingDirectory=/home/[USERNAME]
+ExecStart=/home/[USERNAME]/start-novnc.sh
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

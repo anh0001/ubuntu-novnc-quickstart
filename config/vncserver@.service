@@ -1,0 +1,24 @@
+[Unit]
+Description=TigerVNC server at display %i
+After=network.target syslog.target
+
+[Service]
+Type=simple
+User=[USERNAME]
+Group=[USERNAME]
+WorkingDirectory=/home/[USERNAME]
+
+# Clean up any stale sessions
+ExecStartPre=-/usr/bin/vncserver -kill :%i > /dev/null 2>&1
+
+# Start VNC server
+ExecStart=/usr/bin/vncserver :%i -geometry [RESOLUTION] -depth [DEPTH] -localhost no -fg
+
+# Clean shutdown
+ExecStop=/usr/bin/vncserver -kill :%i
+
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
