@@ -33,14 +33,19 @@ A streamlined, automated solution for setting up TigerVNC with noVNC web access 
    chmod +x install.sh
    ```
 
-3. Run the installer:
+3. **Before installation**, ensure no VNC password is set. If you have an existing VNC password, remove it:
+   ```bash
+   rm ~/.vnc/passwd
+   ```
+
+4. Run the installer:
    ```bash
    sudo ./install.sh
    ```
 
-4. Follow the interactive prompts to configure your setup.
+5. Follow the interactive prompts to configure your setup.
 
-5. Access your desktop via web browser at:
+6. Access your desktop via web browser at:
    ```
    http://YOUR_SERVER_IP:6080/vnc.html
    ```

@@ -92,7 +92,7 @@ pip3 install websockify
 cat > "$HOME_DIR/start-novnc.sh" << EOL
 #!/bin/bash
 cd \$HOME/noVNC
-./utils/novnc_proxy --vnc localhost:590$DISPLAY_NUM
+./utils/novnc_proxy --vnc localhost:\$((5900+$DISPLAY_NUM))
 EOL
 
 chmod +x "$HOME_DIR/start-novnc.sh"
