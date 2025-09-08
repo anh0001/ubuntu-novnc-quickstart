@@ -186,6 +186,16 @@ If you can't connect:
 - Test with localhost first: `http://localhost:6080/vnc.html`
 - Check network routes if connecting from outside
 
+### Blank Screen After Login
+
+If noVNC shows the login screen but displays a blank screen after entering the password:
+
+```bash
+sudo systemctl restart vncserver@77.service
+```
+
+Replace `77` with your actual display number (e.g., `1` if you used display `:1` during installation).
+
 ### Log Locations
 
 - VNC server logs: `~/.vnc/YOUR_HOSTNAME:1.log`
