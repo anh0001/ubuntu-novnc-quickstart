@@ -100,6 +100,10 @@ sudo systemctl status vncserver@1.service
 sudo systemctl status novnc.service
 ```
 
+### Keeping the Session Awake
+
+The installer writes `xset -dpms`, `xset s off`, and `xset s noblank` to `~/.vnc/xstartup` so the XFCE desktop never blanks or locks when idle. Remove those lines (or adjust XFCE's screensaver settings) if you prefer the default lock behaviour.
+
 ### Changing Configuration
 
 To change resolution or other settings after installation:

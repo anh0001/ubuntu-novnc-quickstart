@@ -61,6 +61,10 @@ cat > "$HOME_DIR/.vnc/xstartup" << EOL
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
 [ -r "$HOME_DIR/.Xresources" ] && xrdb "$HOME_DIR/.Xresources"
+# Disable screen blanking so the VNC session stays active
+xset -dpms
+xset s off
+xset s noblank
 # Launch XFCE4 session in foreground
 dbus-launch --exit-with-session startxfce4
 EOL
