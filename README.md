@@ -102,7 +102,17 @@ sudo systemctl status novnc.service
 
 ### Keeping the Session Awake
 
-The installer writes `xset -dpms`, `xset s off`, and `xset s noblank` to `~/.vnc/xstartup` so the XFCE desktop never blanks or locks when idle. Remove those lines (or adjust XFCE's screensaver settings) if you prefer the default lock behaviour.
+The installer configures your VNC desktop to stay awake:
+
+- Adds `xset -dpms`, `xset s off`, and `xset s noblank` in `~/.vnc/xstartup` to disable X blanking.
+- Creates an autostart helper that disables XFCE power-manager display sleep and turns off idle-activated screensaver, while preserving manual lock.
+
+Manual lock still works via the XFCE “Lock Screen” action or by running `xflock4` in a terminal. Only idle-activated blanking/locking is disabled.
+
+To re-enable idle screensaver/blanking, either remove the autostart file `~/.config/autostart/novnc-nosleep.desktop` or run:
+```bash
+gsettings set org.xfce.screensaver idle-activation-enabled true
+```
 
 ### Changing Configuration
 
@@ -188,6 +198,24 @@ If you can't connect:
 - Check if services are running
 - Verify firewall settings: `sudo ufw status`
 - Test with localhost first: `http://localhost:6080/vnc.html`
+
+### Authentication failure: No password configured for VNC Auth
+
+This usually means the VNC password file exists but is unreadable by the user running the service. A common cause is reinstalling after an uninstall that backed up/restored the password as `root`, changing ownership to `root`.
+
+Fix ownership and permissions, then restart services:
+```bash
+sudo chown "$USER:$USER" ~/.vnc ~/.vnc/passwd 2>/dev/null || true
+sudo chmod 600 ~/.vnc/passwd
+sudo systemctl restart vncserver@1.service
+sudo systemctl restart novnc.service
+```
+
+If the password file is missing or corrupted, recreate it:
+```bash
+vncpasswd
+sudo systemctl restart vncserver@1.service
+```
 - Check network routes if connecting from outside
 
 ### Blank Screen After Login

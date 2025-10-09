@@ -82,7 +82,8 @@ read -p "Remove VNC configuration (except password)? (y/n): " REMOVE_VNC_CONFIG
 if [ "$REMOVE_VNC_CONFIG" = "y" ]; then
   echo "Backing up VNC password..."
   if [ -f "$HOME_DIR/.vnc/passwd" ]; then
-    cp "$HOME_DIR/.vnc/passwd" "$HOME_DIR/.vnc/passwd.backup"
+    # Preserve ownership and mode so restore doesn't change file owner to root
+    cp -p "$HOME_DIR/.vnc/passwd" "$HOME_DIR/.vnc/passwd.backup"
   fi
   
   echo "Removing VNC configuration..."
@@ -93,6 +94,9 @@ if [ "$REMOVE_VNC_CONFIG" = "y" ]; then
   echo "Restoring VNC password..."
   if [ -f "$HOME_DIR/.vnc/passwd.backup" ]; then
     mv "$HOME_DIR/.vnc/passwd.backup" "$HOME_DIR/.vnc/passwd"
+    # Ensure correct ownership and permissions just in case filesystem semantics changed
+    chown "$USERNAME:$USERNAME" "$HOME_DIR/.vnc/passwd" 2>/dev/null || true
+    chmod 600 "$HOME_DIR/.vnc/passwd" 2>/dev/null || true
   fi
 fi
 

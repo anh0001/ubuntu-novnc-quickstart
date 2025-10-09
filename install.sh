@@ -49,11 +49,11 @@ apt install -y tigervnc-standalone-server tigervnc-xorg-extension \
 echo ""
 echo "Setting up TigerVNC..."
 
-# Create VNC user directory if it doesn't exist
+# Create VNC user directory if it doesn't exist; ensure ownership
 if [ ! -d "$HOME_DIR/.vnc" ]; then
   mkdir -p "$HOME_DIR/.vnc"
-  chown $USERNAME:$USERNAME "$HOME_DIR/.vnc"
 fi
+chown $USERNAME:$USERNAME "$HOME_DIR/.vnc" || true
 
 # Create or update xstartup file
 cat > "$HOME_DIR/.vnc/xstartup" << EOL
@@ -73,11 +73,58 @@ EOL
 chmod +x "$HOME_DIR/.vnc/xstartup"
 chown $USERNAME:$USERNAME "$HOME_DIR/.vnc/xstartup"
 
+# Create a no-sleep helper that runs inside the XFCE session (autostart)
+mkdir -p "$HOME_DIR/.config/autostart"
+cat > "$HOME_DIR/.vnc/novnc-nosleep.sh" << 'EOL'
+#!/bin/sh
+# Defensive: keep X from blanking/DPMS in-session too
+xset -dpms || true
+xset s off || true
+xset s noblank || true
+
+# Disable XFCE power-manager display sleep/blank
+if command -v xfconf-query >/dev/null 2>&1; then
+  xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/dpms-enabled -s false 2>/dev/null || true
+  xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/blank-on-ac -s 0 2>/dev/null || true
+  xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/sleep-display-ac -s 0 2>/dev/null || true
+  xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/sleep-display-battery -s 0 2>/dev/null || true
+fi
+
+# Disable idle-activated screensaver but keep manual lock working
+if command -v gsettings >/dev/null 2>&1; then
+  gsettings set org.xfce.screensaver idle-activation-enabled false 2>/dev/null || true
+fi
+
+exit 0
+EOL
+
+chmod +x "$HOME_DIR/.vnc/novnc-nosleep.sh"
+chown $USERNAME:$USERNAME "$HOME_DIR/.vnc/novnc-nosleep.sh"
+
+cat > "$HOME_DIR/.config/autostart/novnc-nosleep.desktop" << EOL
+[Desktop Entry]
+Type=Application
+Name=Disable Sleep/Idle for VNC
+Comment=Keep VNC session awake; manual lock still works
+Exec=$HOME_DIR/.vnc/novnc-nosleep.sh
+OnlyShowIn=XFCE;
+X-GNOME-Autostart-enabled=true
+NoDisplay=true
+EOL
+
+chown -R $USERNAME:$USERNAME "$HOME_DIR/.config"
+
 # Set up VNC password if it doesn't exist
 if [ ! -f "$HOME_DIR/.vnc/passwd" ]; then
   echo ""
   echo "Setting up VNC password..."
   su - $USERNAME -c "vncpasswd"
+fi
+
+# Ensure VNC password file has correct ownership and permissions
+if [ -f "$HOME_DIR/.vnc/passwd" ]; then
+  chown $USERNAME:$USERNAME "$HOME_DIR/.vnc/passwd" || true
+  chmod 600 "$HOME_DIR/.vnc/passwd" || true
 fi
 
 # Install noVNC
