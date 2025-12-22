@@ -19,6 +19,11 @@ else
 fi
 
 HOME_DIR=$(eval echo ~$USERNAME)
+VNC_SERVICE_TEMPLATE="/etc/systemd/system/vncserver-${USERNAME}@.service"
+NOVNC_SERVICE="/etc/systemd/system/novnc-${USERNAME}.service"
+NOVNC_SERVICE_NAME="novnc-${USERNAME}.service"
+LEGACY_VNC_SERVICE="/etc/systemd/system/vncserver@.service"
+LEGACY_NOVNC_SERVICE="/etc/systemd/system/novnc.service"
 
 # Display header
 echo "===================================================="
@@ -39,18 +44,36 @@ fi
 
 # Find all running VNC services
 echo "Finding and stopping VNC services..."
-RUNNING_SERVICES=$(systemctl list-units --type=service --state=running | grep vncserver@ | awk '{print $1}')
+RUNNING_SERVICES=$(systemctl list-units --type=service --state=running | awk '{print $1}' | grep "^vncserver-${USERNAME}@" || true)
+LEGACY_VNC_MATCH=false
+if [ -f "$LEGACY_VNC_SERVICE" ] && grep -q "User=$USERNAME" "$LEGACY_VNC_SERVICE"; then
+  LEGACY_VNC_MATCH=true
+fi
+if [ "$LEGACY_VNC_MATCH" = "true" ]; then
+  LEGACY_RUNNING_SERVICES=$(systemctl list-units --type=service --state=running | awk '{print $1}' | grep "^vncserver@" || true)
+fi
 
 # Stop and disable services
 echo "Stopping and disabling services..."
-systemctl stop novnc.service 2>/dev/null || true
-systemctl disable novnc.service 2>/dev/null || true
+systemctl stop "$NOVNC_SERVICE_NAME" 2>/dev/null || true
+systemctl disable "$NOVNC_SERVICE_NAME" 2>/dev/null || true
+if [ -f "$LEGACY_NOVNC_SERVICE" ] && grep -q "ExecStart=$HOME_DIR/start-novnc.sh" "$LEGACY_NOVNC_SERVICE"; then
+  systemctl stop novnc.service 2>/dev/null || true
+  systemctl disable novnc.service 2>/dev/null || true
+fi
 
 for SERVICE in $RUNNING_SERVICES; do
   echo "Stopping $SERVICE"
   systemctl stop "$SERVICE" 2>/dev/null || true
   systemctl disable "$SERVICE" 2>/dev/null || true
 done
+if [ "$LEGACY_VNC_MATCH" = "true" ]; then
+  for SERVICE in $LEGACY_RUNNING_SERVICES; do
+    echo "Stopping $SERVICE"
+    systemctl stop "$SERVICE" 2>/dev/null || true
+    systemctl disable "$SERVICE" 2>/dev/null || true
+  done
+fi
 
 # Stop any remaining VNC processes
 echo "Stopping any remaining VNC processes..."
@@ -58,8 +81,14 @@ pkill Xtigervnc 2>/dev/null || true
 
 # Remove service files
 echo "Removing service files..."
-rm -f /etc/systemd/system/novnc.service
-rm -f /etc/systemd/system/vncserver@.service
+rm -f "$NOVNC_SERVICE"
+rm -f "$VNC_SERVICE_TEMPLATE"
+if [ -f "$LEGACY_NOVNC_SERVICE" ] && grep -q "ExecStart=$HOME_DIR/start-novnc.sh" "$LEGACY_NOVNC_SERVICE"; then
+  rm -f "$LEGACY_NOVNC_SERVICE"
+fi
+if [ "$LEGACY_VNC_MATCH" = "true" ]; then
+  rm -f "$LEGACY_VNC_SERVICE"
+fi
 systemctl daemon-reload
 
 # Remove startup script

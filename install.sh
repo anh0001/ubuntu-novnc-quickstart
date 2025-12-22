@@ -31,6 +31,23 @@ echo ""
 read -p "Enter VNC display number (default: 1): " DISPLAY_NUM
 DISPLAY_NUM=${DISPLAY_NUM:-1}
 
+# Ask for noVNC port
+while true; do
+  read -p "Enter noVNC web port (default: 6080): " NOVNC_PORT
+  NOVNC_PORT=${NOVNC_PORT:-6080}
+  if ! [[ "$NOVNC_PORT" =~ ^[0-9]+$ ]] || [ "$NOVNC_PORT" -lt 1 ] || [ "$NOVNC_PORT" -gt 65535 ]; then
+    echo "Please enter a valid port between 1 and 65535."
+    continue
+  fi
+  if command -v ss >/dev/null 2>&1; then
+    if ss -ltn | awk '{print $4}' | grep -q ":$NOVNC_PORT$"; then
+      echo "Port $NOVNC_PORT appears to be in use. Choose a different port."
+      continue
+    fi
+  fi
+  break
+done
+
 # Ask for geometry
 read -p "Enter screen resolution (default: 1280x800): " GEOMETRY
 GEOMETRY=${GEOMETRY:-1280x800}
@@ -143,7 +160,7 @@ pip3 install websockify
 cat > "$HOME_DIR/start-novnc.sh" << EOL
 #!/bin/bash
 cd \$HOME/noVNC
-./utils/novnc_proxy --vnc localhost:\$((5900+$DISPLAY_NUM))
+./utils/novnc_proxy --vnc localhost:\$((5900+$DISPLAY_NUM)) --listen $NOVNC_PORT
 EOL
 
 chmod +x "$HOME_DIR/start-novnc.sh"
@@ -154,7 +171,12 @@ echo ""
 echo "Setting up systemd services..."
 
 # Create VNC service file
-cat > "/etc/systemd/system/vncserver@.service" << EOL
+VNC_SERVICE_TEMPLATE="/etc/systemd/system/vncserver-${USERNAME}@.service"
+VNC_SERVICE="vncserver-${USERNAME}@${DISPLAY_NUM}.service"
+NOVNC_SERVICE="/etc/systemd/system/novnc-${USERNAME}.service"
+NOVNC_SERVICE_NAME="novnc-${USERNAME}.service"
+
+cat > "$VNC_SERVICE_TEMPLATE" << EOL
 [Unit]
 Description=TigerVNC server at display %i
 After=network.target syslog.target
@@ -182,11 +204,11 @@ WantedBy=multi-user.target
 EOL
 
 # Create noVNC service file
-cat > "/etc/systemd/system/novnc.service" << EOL
+cat > "$NOVNC_SERVICE" << EOL
 [Unit]
 Description=noVNC WebSocket VNC Proxy
-After=network.target vncserver@$DISPLAY_NUM.service
-Requires=vncserver@$DISPLAY_NUM.service
+After=network.target $VNC_SERVICE
+Requires=$VNC_SERVICE
 
 [Service]
 Type=simple
@@ -203,10 +225,10 @@ EOL
 
 # Enable and start services
 systemctl daemon-reload
-systemctl enable vncserver@$DISPLAY_NUM.service
-systemctl start vncserver@$DISPLAY_NUM.service
-systemctl enable novnc.service
-systemctl start novnc.service
+systemctl enable "$VNC_SERVICE"
+systemctl start "$VNC_SERVICE"
+systemctl enable "$NOVNC_SERVICE_NAME"
+systemctl start "$NOVNC_SERVICE_NAME"
 
 # Get IP address
 IP_ADDRESS=$(hostname -I | awk '{print $1}')
@@ -217,15 +239,15 @@ echo "  Installation Complete!"
 echo "===================================================="
 echo ""
 echo "Your noVNC server is running at:"
-echo "http://$IP_ADDRESS:6080/vnc.html"
+echo "http://$IP_ADDRESS:$NOVNC_PORT/vnc.html"
 echo ""
 echo "VNC server is running on display :$DISPLAY_NUM"
 echo "VNC port: 590$DISPLAY_NUM"
-echo "noVNC port: 6080"
+echo "noVNC port: $NOVNC_PORT"
 echo ""
 echo "To manage services:"
-echo "  sudo systemctl start|stop|restart vncserver@$DISPLAY_NUM.service"
-echo "  sudo systemctl start|stop|restart novnc.service"
+echo "  sudo systemctl start|stop|restart vncserver-$USERNAME@$DISPLAY_NUM.service"
+echo "  sudo systemctl start|stop|restart novnc-$USERNAME.service"
 echo ""
 echo "For security, consider setting up SSL or a reverse proxy."
 echo "See scripts/setup-ssl.sh for SSL setup."

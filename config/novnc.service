@@ -1,7 +1,7 @@
 [Unit]
 Description=noVNC WebSocket VNC Proxy
-After=network.target vncserver@[DISPLAY].service
-Requires=vncserver@[DISPLAY].service
+After=network.target vncserver-[USERNAME]@[DISPLAY].service
+Requires=vncserver-[USERNAME]@[DISPLAY].service
 
 [Service]
 Type=simple

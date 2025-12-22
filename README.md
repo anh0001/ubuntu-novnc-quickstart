@@ -10,7 +10,7 @@ A streamlined, automated solution for setting up TigerVNC with noVNC web access 
 - **One-command installation** of TigerVNC and noVNC
 - **Systemd integration** for automatic startup and proper service management
 - **Web-based remote access** to your Ubuntu desktop from any browser
-- **Customizable configuration** (resolution, color depth, display number)
+- **Customizable configuration** (resolution, color depth, display number, noVNC port)
 - **Security options** including SSL/TLS encryption and firewall configuration
 - **Clean uninstallation** option to revert all changes
 
@@ -47,17 +47,21 @@ A streamlined, automated solution for setting up TigerVNC with noVNC web access 
 
 6. Access your desktop via web browser at:
    ```
-   http://YOUR_SERVER_IP:6080/vnc.html
+   http://YOUR_SERVER_IP:<noVNC-port>/vnc.html
    ```
+   (default noVNC port is 6080)
 
 ## ⚙️ Configuration Options
 
 During installation, you'll be prompted for:
 
 - VNC display number (default: 1)
+- noVNC web port (default: 6080)
 - Screen resolution (default: 1280x800)
 - Color depth (default: 24)
 - VNC password for secure access
+
+Note: On shared machines, each user should choose a unique noVNC port to avoid conflicts.
 
 All configuration is stored in standard locations:
 
@@ -70,7 +74,7 @@ All configuration is stored in standard locations:
 
 **Through web browser (preferred):**
 
-- Navigate to: `http://YOUR_SERVER_IP:6080/vnc.html`
+- Navigate to: `http://YOUR_SERVER_IP:<noVNC-port>/vnc.html` (default 6080)
 - Enter your VNC password when prompted
 
 **Using a VNC client:**
@@ -81,23 +85,24 @@ All configuration is stored in standard locations:
 ### Managing Services
 
 **Start/stop/restart the VNC server:**
+Replace `<user>` with the username that ran the installer.
 ```bash
-sudo systemctl start vncserver@1.service
-sudo systemctl stop vncserver@1.service
-sudo systemctl restart vncserver@1.service
+sudo systemctl start vncserver-<user>@1.service
+sudo systemctl stop vncserver-<user>@1.service
+sudo systemctl restart vncserver-<user>@1.service
 ```
 
 **Start/stop/restart the noVNC service:**
 ```bash
-sudo systemctl start novnc.service
-sudo systemctl stop novnc.service
-sudo systemctl restart novnc.service
+sudo systemctl start novnc-<user>.service
+sudo systemctl stop novnc-<user>.service
+sudo systemctl restart novnc-<user>.service
 ```
 
 **Check service status:**
 ```bash
-sudo systemctl status vncserver@1.service
-sudo systemctl status novnc.service
+sudo systemctl status vncserver-<user>@1.service
+sudo systemctl status novnc-<user>.service
 ```
 
 ### Keeping the Session Awake
@@ -120,7 +125,7 @@ To change resolution or other settings after installation:
 
 1. Edit the VNC service file:
    ```bash
-   sudo nano /etc/systemd/system/vncserver@.service
+   sudo nano /etc/systemd/system/vncserver-<user>@.service
    ```
 
 2. Modify the `-geometry` or other parameters
@@ -128,7 +133,7 @@ To change resolution or other settings after installation:
 3. Restart the service:
    ```bash
    sudo systemctl daemon-reload
-   sudo systemctl restart vncserver@1.service
+   sudo systemctl restart vncserver-<user>@1.service
    ```
 
 ## 🔒 Security Enhancements
@@ -141,7 +146,7 @@ Set up SSL for encrypted connections:
 ```bash
 sudo ./scripts/setup-ssl.sh
 ```
-Then access via: `https://YOUR_SERVER_IP:6080/vnc.html`
+Then access via: `https://YOUR_SERVER_IP:<noVNC-port>/vnc.html`
 
 ### 2. Firewall Configuration
 
@@ -155,7 +160,7 @@ sudo ./scripts/setup-firewall.sh
 Always use a strong VNC password. To change your password:
 ```bash
 vncpasswd
-sudo systemctl restart vncserver@1.service
+sudo systemctl restart vncserver-<user>@1.service
 ```
 
 ### 4. Reverse Proxy (Advanced)
@@ -181,15 +186,15 @@ This will:
 
 Check the service status and logs:
 ```bash
-sudo systemctl status vncserver@1.service
-sudo journalctl -u vncserver@1.service
+sudo systemctl status vncserver-<user>@1.service
+sudo journalctl -u vncserver-<user>@1.service
 ```
 
 Common issues:
 
 - Display already in use: Another VNC server may be running
 - Authentication failure: VNC password issues
-- Port conflicts: Another service using port 5901 or 6080
+- Port conflicts: Another service using port 5901 or your selected noVNC port
 
 ### Connection Issues
 
@@ -197,7 +202,7 @@ If you can't connect:
 
 - Check if services are running
 - Verify firewall settings: `sudo ufw status`
-- Test with localhost first: `http://localhost:6080/vnc.html`
+- Test with localhost first: `http://localhost:<noVNC-port>/vnc.html`
 
 ### Authentication failure: No password configured for VNC Auth
 
@@ -207,14 +212,14 @@ Fix ownership and permissions, then restart services:
 ```bash
 sudo chown "$USER:$USER" ~/.vnc ~/.vnc/passwd 2>/dev/null || true
 sudo chmod 600 ~/.vnc/passwd
-sudo systemctl restart vncserver@1.service
-sudo systemctl restart novnc.service
+sudo systemctl restart vncserver-<user>@1.service
+sudo systemctl restart novnc-<user>.service
 ```
 
 If the password file is missing or corrupted, recreate it:
 ```bash
 vncpasswd
-sudo systemctl restart vncserver@1.service
+sudo systemctl restart vncserver-<user>@1.service
 ```
 - Check network routes if connecting from outside
 
@@ -223,7 +228,7 @@ sudo systemctl restart vncserver@1.service
 If noVNC shows the login screen but displays a blank screen after entering the password:
 
 ```bash
-sudo systemctl restart vncserver@77.service
+sudo systemctl restart vncserver-<user>@77.service
 ```
 
 Replace `77` with your actual display number (e.g., `1` if you used display `:1` during installation).
@@ -231,7 +236,7 @@ Replace `77` with your actual display number (e.g., `1` if you used display `:1`
 ### Log Locations
 
 - VNC server logs: `~/.vnc/YOUR_HOSTNAME:1.log`
-- noVNC logs: `sudo journalctl -u novnc.service`
+- noVNC logs: `sudo journalctl -u novnc-<user>.service`
 - System logs: `sudo journalctl -xef`
 
 ## 📝 License

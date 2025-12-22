@@ -14,6 +14,8 @@ fi
 read -p "Enter VNC display number (default: 1): " DISPLAY_NUM
 DISPLAY_NUM=${DISPLAY_NUM:-1}
 VNC_PORT=$((5900 + $DISPLAY_NUM))
+read -p "Enter noVNC web port (default: 6080): " NOVNC_PORT
+NOVNC_PORT=${NOVNC_PORT:-6080}
 
 echo "Setting up firewall rules..."
 
@@ -25,13 +27,13 @@ if ! command -v ufw &> /dev/null; then
 fi
 
 # Set up firewall rules
-ufw allow 6080/tcp comment 'noVNC web access'
+ufw allow $NOVNC_PORT/tcp comment 'noVNC web access'
 ufw allow $VNC_PORT/tcp comment 'VNC server'
 ufw status
 
 echo ""
 echo "Firewall rules added for:"
-echo "- noVNC web access (port 6080)"
+echo "- noVNC web access (port $NOVNC_PORT)"
 echo "- VNC server (port $VNC_PORT)"
 echo ""
 echo "If ufw is not enabled, enable it with:"
