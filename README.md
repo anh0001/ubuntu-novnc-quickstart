@@ -59,6 +59,7 @@ During installation, you'll be prompted for:
 - noVNC web port (default: 6080)
 - Screen resolution (default: 1280x800)
 - Color depth (default: 24)
+- Optional Google Chrome install for the VNC desktop (amd64 only)
 - VNC password for secure access
 
 Note: On shared machines, each user should choose a unique noVNC port to avoid conflicts.
@@ -179,6 +180,11 @@ This will:
 - Stop and disable all services
 - Remove service files
 - Restore your system to its previous state
+
+Installed packages are not removed automatically. If you opted into Google Chrome during install, remove it with:
+```bash
+sudo apt remove google-chrome-stable
+```
 
 ## 🔍 Troubleshooting
 

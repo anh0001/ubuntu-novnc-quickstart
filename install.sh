@@ -62,6 +62,31 @@ apt update
 apt install -y tigervnc-standalone-server tigervnc-xorg-extension \
   xfce4 xfce4-goodies git python3 python3-pip net-tools
 
+# Optional: install Google Chrome for use inside the VNC desktop
+echo ""
+read -p "Install Google Chrome in the VNC desktop? (y/N): " INSTALL_CHROME
+INSTALL_CHROME=${INSTALL_CHROME:-N}
+if [[ "$INSTALL_CHROME" =~ ^[Yy]$ ]]; then
+  ARCH=$(dpkg --print-architecture)
+  if [ "$ARCH" != "amd64" ]; then
+    echo "Google Chrome is only available for amd64. Skipping installation on $ARCH."
+  elif command -v google-chrome >/dev/null 2>&1; then
+    echo "Google Chrome is already installed."
+  else
+    echo "Installing Google Chrome..."
+    apt install -y wget gnupg ca-certificates
+    install -d -m 0755 /etc/apt/keyrings
+    if [ ! -f /etc/apt/keyrings/google-chrome.gpg ]; then
+      wget -qO- https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /etc/apt/keyrings/google-chrome.gpg
+    fi
+    if [ ! -f /etc/apt/sources.list.d/google-chrome.list ]; then
+      echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
+    fi
+    apt update
+    apt install -y google-chrome-stable
+  fi
+fi
+
 # Set up TigerVNC
 echo ""
 echo "Setting up TigerVNC..."
