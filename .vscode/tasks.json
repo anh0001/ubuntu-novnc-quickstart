@@ -1,0 +1,16 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Restart VNC & noVNC (fresh session)",
+      "type": "shell",
+      "command": "sudo systemctl restart vncserver@77.service && sudo systemctl restart novnc.service",
+      "detail": "Kills the stuck display :77 session and starts a clean one, then reattaches noVNC to it.",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    }
+  ]
+}
