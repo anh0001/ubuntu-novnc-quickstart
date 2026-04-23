@@ -1,6 +1,6 @@
 # Ubuntu noVNC Quickstart
 
-![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04+-orange.svg)
+![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04%20%7C%2024.04-orange.svg)
 ![License](https://img.shields.io/github/license/yourusername/ubuntu-novnc-quickstart)
 
 A streamlined, automated solution for setting up TigerVNC with noVNC web access on Ubuntu systems. Access your Ubuntu desktop remotely through any web browser, with proper systemd integration and security options.
@@ -16,9 +16,11 @@ A streamlined, automated solution for setting up TigerVNC with noVNC web access 
 
 ## 📋 Requirements
 
-- Ubuntu 18.04, 20.04, 22.04 or newer
+- Ubuntu 22.04 LTS or 24.04 LTS
 - Sudo/root access
 - Internet connection (for package installation)
+
+The installer warns before continuing on any other Ubuntu release or non-Ubuntu OS. Unsupported systems may still work, but only Ubuntu 22.04 LTS and 24.04 LTS are considered supported targets.
 
 ## 🚀 Quick Installation
 

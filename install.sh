@@ -21,6 +21,31 @@ fi
 HOME_DIR=$(eval echo ~$USERNAME)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Detect the current OS and warn before continuing on unsupported systems.
+if [ -r /etc/os-release ]; then
+  . /etc/os-release
+else
+  ID="unknown"
+  VERSION_ID="unknown"
+  PRETTY_NAME="Unknown OS"
+fi
+
+SUPPORTED_UBUNTU=false
+if [ "${ID:-}" = "ubuntu" ] && { [ "${VERSION_ID:-}" = "22.04" ] || [ "${VERSION_ID:-}" = "24.04" ]; }; then
+  SUPPORTED_UBUNTU=true
+fi
+
+if [ "$SUPPORTED_UBUNTU" != "true" ]; then
+  echo "Warning: detected OS: ${PRETTY_NAME:-Unknown OS}"
+  echo "This installer is supported on Ubuntu 22.04 LTS and 24.04 LTS."
+  echo "Other Ubuntu releases or non-Ubuntu systems may still work, but are not supported."
+  read -r -p "Continue anyway? (y/N): " CONTINUE_INSTALL
+  if ! [[ "$CONTINUE_INSTALL" =~ ^[Yy]$ ]]; then
+    echo "Installation cancelled."
+    exit 1
+  fi
+fi
+
 # Display header
 echo "===================================================="
 echo "  Ubuntu noVNC Quick Setup"
@@ -60,7 +85,7 @@ echo ""
 echo "Installing required packages..."
 apt update
 apt install -y tigervnc-standalone-server tigervnc-xorg-extension \
-  xfce4 xfce4-goodies git python3 python3-pip net-tools
+  xfce4 xfce4-goodies git python3 dbus-x11 websockify net-tools
 
 # Optional: install Google Chrome for use inside the VNC desktop
 echo ""
@@ -177,9 +202,6 @@ echo "Setting up noVNC..."
 if [ ! -d "$HOME_DIR/noVNC" ]; then
   su - $USERNAME -c "git clone https://github.com/novnc/noVNC.git"
 fi
-
-# Install websockify
-pip3 install websockify
 
 # Create noVNC startup script
 cat > "$HOME_DIR/start-novnc.sh" << EOL
