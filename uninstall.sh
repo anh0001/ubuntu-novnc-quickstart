@@ -33,7 +33,6 @@ echo ""
 
 # Confirm uninstallation
 echo "This will remove all noVNC and VNC services and configuration."
-echo "Your VNC password will be preserved."
 echo ""
 read -p "Continue with uninstallation? (y/n): " CONFIRM
 
@@ -106,27 +105,22 @@ fi
 
 # Ask if user wants to remove VNC configuration
 echo ""
-read -p "Remove VNC configuration (except password)? (y/n): " REMOVE_VNC_CONFIG
+read -p "Remove VNC configuration? (y/n): " REMOVE_VNC_CONFIG
 
 if [ "$REMOVE_VNC_CONFIG" = "y" ]; then
-  echo "Backing up VNC password..."
-  if [ -f "$HOME_DIR/.vnc/passwd" ]; then
-    # Preserve ownership and mode so restore doesn't change file owner to root
-    cp -p "$HOME_DIR/.vnc/passwd" "$HOME_DIR/.vnc/passwd.backup"
-  fi
-  
   echo "Removing VNC configuration..."
   rm -f "$HOME_DIR/.vnc/xstartup"
   rm -f "$HOME_DIR/.vnc/*.log"
   rm -f "$HOME_DIR/.vnc/*.pid"
-  
-  echo "Restoring VNC password..."
-  if [ -f "$HOME_DIR/.vnc/passwd.backup" ]; then
-    mv "$HOME_DIR/.vnc/passwd.backup" "$HOME_DIR/.vnc/passwd"
-    # Ensure correct ownership and permissions just in case filesystem semantics changed
-    chown "$USERNAME:$USERNAME" "$HOME_DIR/.vnc/passwd" 2>/dev/null || true
-    chmod 600 "$HOME_DIR/.vnc/passwd" 2>/dev/null || true
-  fi
+fi
+
+# Ask if user wants to remove VNC/noVNC password
+echo ""
+read -p "Remove noVNC/VNC password ($HOME_DIR/.vnc/passwd)? (y/n): " REMOVE_VNC_PASSWD
+
+if [ "$REMOVE_VNC_PASSWD" = "y" ]; then
+  echo "Removing VNC password..."
+  rm -f "$HOME_DIR/.vnc/passwd"
 fi
 
 # Ask if user wants to remove SSL certificates
@@ -147,7 +141,6 @@ echo "===================================================="
 echo ""
 echo "The following were not removed:"
 echo "- Installed packages (TigerVNC, XFCE, etc.)"
-echo "- VNC password"
 echo ""
 echo "To remove installed packages, run:"
 echo "sudo apt remove tigervnc-standalone-server tigervnc-xorg-extension xfce4"

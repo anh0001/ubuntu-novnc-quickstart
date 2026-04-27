@@ -185,7 +185,15 @@ chown -R $USERNAME:$USERNAME "$HOME_DIR/.config"
 if [ ! -f "$HOME_DIR/.vnc/passwd" ]; then
   echo ""
   echo "Setting up VNC password..."
-  su - $USERNAME -c "vncpasswd"
+  while :; do
+    read -rsp "Password: " VNC_PW; echo
+    read -rsp "Verify:   " VNC_PW2; echo
+    [ "$VNC_PW" = "$VNC_PW2" ] && [ -n "$VNC_PW" ] && break
+    echo "Mismatch or empty. Retry."
+  done
+  mkdir -p "$HOME_DIR/.vnc"
+  printf '%s' "$VNC_PW" | su - $USERNAME -c "vncpasswd -f > '$HOME_DIR/.vnc/passwd'"
+  unset VNC_PW VNC_PW2
 fi
 
 # Ensure VNC password file has correct ownership and permissions
